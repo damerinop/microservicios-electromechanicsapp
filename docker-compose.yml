@@ -1,0 +1,64 @@
+x-api-env: &api-env
+  PORT: "8080"
+  DB_HOST: postgres-db
+  DB_PORT: "5432"
+  DB_NAME: electromechanicsdb
+  DB_USER: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+  DDL_AUTO: update
+  SHOW_SQL: "false"
+  LOGGING_LEVEL_ORG_HIBERNATE_SQL: INFO
+  JAVA_TOOL_OPTIONS: -Xmx256m
+
+services:
+  postgres-db:
+    image: postgres:17-alpine
+    container_name: postgres_electromechanics
+    restart: always
+    environment:
+      POSTGRES_DB: electromechanicsdb
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d electromechanicsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  empleados-api:
+    build: ./empleados
+    container_name: empleados_api
+    restart: always
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    ports:
+      - "8084:8080"
+    environment: *api-env
+
+  actividades-api:
+    build: ./actividades
+    container_name: actividades_api
+    restart: always
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    ports:
+      - "8088:8080"
+    environment: *api-env
+
+  jornada-api:
+    build: ./registrarjornada
+    container_name: jornada_api
+    restart: always
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    ports:
+      - "8086:8080"
+    environment: *api-env
+
+volumes:
+  postgres_data:

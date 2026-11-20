@@ -1,0 +1,7 @@
+.env
+*.pem
+*.log
+target/
+.idea/
+.vscode/
+HELP.md
